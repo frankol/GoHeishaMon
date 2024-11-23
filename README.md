@@ -40,29 +40,35 @@ Overview of the process:
 
 * Install Go 1.20.4 on the PI with the Installation-Script. It will download the right version and install it
 * Build GoHeishaMon with Go
-  cd ./package/heishamon/src
-  go build -v
-  
+```
+  cd ./package/heishamon/src  
+  go build -v  
+```
 * Copy all needed files to the system
-  cp ./package/heishamon/files/config.example /etc/heishamon/config.yaml
-  cp ./package/heishamon/files/heishamon.init /etc/init.d/heishamon
-  cp ./package/heishamon/files/topics.yaml /etc/heishamon/
-  cp ./package/heishamon/files/topicsOptionalPCB.yaml /etc/heishamon
-  cp ./package/heishamon/src/GoHeishaMon /usr/bin/heishamon
-
+```  
+  cp ./package/heishamon/files/config.example /etc/heishamon/config.yaml  
+  cp ./package/heishamon/files/heishamon.init /etc/init.d/heishamon  
+  cp ./package/heishamon/files/topics.yaml /etc/heishamon/  
+  cp ./package/heishamon/files/topicsOptionalPCB.yaml /etc/heishamon  
+  cp ./package/heishamon/src/GoHeishaMon /usr/bin/heishamon  
+```
 * Make the filex excutable
-  chmod +x /etc/init.d/heishamon
-  chmod +x /usr/bin/heishamon
-
+```  
+  chmod +x /etc/init.d/heishamon  
+  chmod +x /usr/bin/heishamon  
+```
 * Enable Service
-  update-rc.d heishamon defaults
-  
+```  
+  update-rc.d heishamon defaults  
+```
 
 In order to configure GoHeishaMon:
-
+```
 * systemctl stop heishamon
+```
 * Edit the config file (/etc/heishamon/config.yaml)
-* systemctl start heishamon
-* systemctl status heishamon
-
-Logs are stored in /var/log/messages
+```
+* systemctl start heishamon  
+* systemctl status heishamon  
+```
+Logs are stored in /var/log/messages  
