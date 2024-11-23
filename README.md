@@ -1,6 +1,6 @@
-# Custom firmware for the Panasonic CZ-TAW1
+# Custom heishamon for the Panasonic Heat-Pumps
 
-This is an alternative firmware for RaspberryPi Zero W, an IoT adapter for the H-series heat pumps. It consists of:
+This is an alternative version for RaspberryPi Zero W, an IoT adapter for the H-series heat pumps. It consists of:
 
 * a gateway written in Go that translates serial comms with the heat pump on the CN-CNT link to MQTT
 
