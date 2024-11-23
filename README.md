@@ -1,9 +1,8 @@
 # Custom firmware for the Panasonic CZ-TAW1
 
-This is an alternative firmware for the Panasonic CZ-TAW1, an IoT adapter for the H-series heat pumps. It consists of:
+This is an alternative firmware for RaspberryPi Zero W, an IoT adapter for the H-series heat pumps. It consists of:
 
 * a gateway written in Go that translates serial comms with the heat pump on the CN-CNT link to MQTT
-* a port of OpenWRT (22.03.3 currently) for the CZ-TAW1
 
 ## About
 
@@ -18,7 +17,7 @@ The gateway (called GoHeishaMon or heishamon) is responsible for parsing the dat
 * supports Home Assistant's MQTT discovery
 * emulation of the Optional PCB
 
-GoHeishaMon can be used without the CZ-TAW1 module on a platform supported by Go. It requires a serial port connection to the Heat Pump. The new version is running as a daemon. As a consequence, the logs are no longer written to stdout, they end up in system log (and MQTT topic).
+GoHeishaMon will be used without the CZ-TAW1 module on a RaspberryPI. It requires a serial port connection to the Heat Pump. The new version is running as a daemon. As a consequence, the logs are no longer written to stdout, they end up in system log [/var/log/messages] (and MQTT topic).
 
 #### Note
 
@@ -26,57 +25,44 @@ GoHeishaMon can be used without the CZ-TAW1 module on a platform supported by Go
 * the configuration is stored in /etc/heishamon/ and is preserved on upgrades
 * the service name is **heishamon**
 
-### OpenWRT 22.03.3 image for the CZ-TAW1
-
-#### Firmware features
-
-* stock OpenWRT, with up-to-date kernel (5.10.161)
-* GoHeishaMon is preinstalled and running as a system service (named heishamon)
-* sysupgrade and upgrades from LuCI are working
-* The CZ-TAW1's WiFi can be used as an Access Point
-* ca. 5.5 MiB free on JFFS
-* WPA3, LuCI over HTTPS etc.
-
-This is pretty much stock OpenWRT, by default configured as an Acess Point/range extender, i.e. on first boot the Ethernet interface is configured as an DHCP client, and the AP is disabled. Both are in the LAN firewall zone, though one can of course reconfigure it and use the device as a router.
-There is no default password. The default host name is "aquarea".
-
-*Note*
-This firmware is **not** using the factory MTD layout, i.e. the two "sides" of the original firmware are gone. In exchange you have a lot more space on the JFFS partiion. Of the stock partitions, u-boot, u-boot env and art are preserved. There is no easy way to migrate from stock and there is no easy way back. Back up everything.
-
 ## Installation
 
-Beware: This is a dangerous process that may brick your device! You do it on your own responsibility.
+If you use a arm64 OS, please download the right go version.
 
 ### Prerequisites
 
-* Serial port connection to the device
-* Backup of the MTD layout, all MTD partitions and U-Boot environment
-* TFTP server
+* Serial port TTL Adapter connected to the Pi for communication with the pump
+* Go Version 1.20.4
+* Installed RaspberryOS
+* I had to re-arange the PINs of the TTL Adapter with a small breakout board to match the pinout of the pump cable
 
 Overview of the process:
 
-* Backup MTD layout (cat /proc/mtd)
-* Backup U-Boot env (fw_printenv)
-* Backup **all** partitions (dd if=/dev/mtdx of=/tmp/mtdx_backup, then scp somewhere)
-* Reboot to U-Boot
-* Change boot address and options
-  * *skip this if you intend to only boot it from RAM without altering the MTD*
-  * setenv bootargs console=ttyS0,115200
-  * setenv bootcmd bootm 0x9f050000
-  * saveenv
-* Download the initramfs image to RAM using TFTP (set the IP addresses in serverip/ipaddr variables)
-  * tftp 0x81000000 openwrt-ath79-generic-panasonic_cz-taw1-initramfs-kernel.bin
-* Boot the image
-  * bootm 0x81000000
-* If you want this permanet, **ssh** to OpenWRT and:
-  * download openwrt-ath79-generic-panasonic_cz-taw1-squashfs-sysupgrade.bin to /tmp
-  * sysupgrade /tmp/openwrt-ath79-generic-panasonic_cz-taw1-squashfs-sysupgrade.bin
-  * ... or just do it from LuCI
+* Install Go 1.20.4 on the PI with the Installation-Script. It will download the right version and install it
+* Build GoHeishaMon with Go
+  cd ./package/heishamon/src
+  go build -v
+  
+* Copy all needed files to the system
+  cp ./package/heishamon/files/config.example /etc/heishamon/config.yaml
+  cp ./package/heishamon/files/heishamon.init /etc/init.d/heishamon
+  cp ./package/heishamon/files/topics.yaml /etc/heishamon/
+  cp ./package/heishamon/files/topicsOptionalPCB.yaml /etc/heishamon
+  cp ./package/heishamon/src/GoHeishaMon /usr/bin/heishamon
+
+* Make the filex excutable
+  chmod +x /etc/init.d/heishamon
+  chmod +x /usr/bin/heishamon
+
+* Enable Service
+  update-rc.d heishamon defaults
+  
 
 In order to configure GoHeishaMon:
 
-* service heishamon stop
+* systemctl stop heishamon
 * Edit the config file (/etc/heishamon/config.yaml)
-* service heishamon start
+* systemctl start heishamon
+* systemctl status heishamon
 
-Logs - either logread or Status/System Log in LuCI
+Logs are stored in /var/log/messages
